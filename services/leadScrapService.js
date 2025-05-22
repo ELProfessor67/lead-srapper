@@ -96,7 +96,7 @@ export async function searchGoogleMaps(query, leadCount = 10, minReviews = 0) {
 
       const stars = starsStr ? Number(starsStr) : 0;
       const numberOfReviews = reviewsStr ? Number(reviewsStr) : 0;
-      if (stars < minReviews) return;
+      if (stars > minReviews) return;
      
 
       businesses.push({
