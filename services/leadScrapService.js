@@ -12,7 +12,8 @@ export async function searchGoogleMaps(query, leadCount = 10, minReviews = 0) {
 
     const browser = await puppeteerExtra.launch({
       headless: "new",
-      executablePath: "", // Add your Chrome/Chromium path here
+      executablePath: "", // Add your Chrome/Chromium path ,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
     const page = await browser.newPage();
