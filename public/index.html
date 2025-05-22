@@ -242,7 +242,7 @@
             const encodedQuery = encodeURIComponent(query);
             
             // Make the AJAX request
-            fetch(`http://localhost:3000/get-leads?query=${encodedQuery}&leadCount=${leadCount}&minReviews=${minReviews}`)
+            fetch(`/get-leads?query=${encodedQuery}&leadCount=${leadCount}&minReviews=${minReviews}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
