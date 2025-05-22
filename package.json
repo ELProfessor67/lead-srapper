@@ -1,0 +1,23 @@
+{
+  "name": "lead-scrapper",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@sparticuz/chromium": "^133.0.0",
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "puppeteer": "^24.9.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  }
+}

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lead Scraper</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .button-container {
+            display: flex;
+            align-items: center;
+            margin-top: 25px;
+        }
+
+        .results-container {
+            margin-top: 30px;
+        }
+
+        .leads-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .lead-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .lead-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .lead-rating {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .stars {
+            color: #FFD700;
+            margin-right: 5px;
+        }
+
+        .lead-details {
+            margin-top: 10px;
+        }
+
+        .lead-detail {
+            margin-bottom: 5px;
+            display: flex;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            width: 80px;
+            color: #666;
+        }
+
+        .detail-value {
+            flex: 1;
+        }
+
+        .lead-links {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .lead-link {
+            text-decoration: none;
+            color: #4285F4;
+            font-weight: 500;
+        }
+
+        .lead-link:hover {
+            text-decoration: underline;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Lead Scraper</h1>
+        
+        <div class="form-container">
+            <div class="form-group">
+                <label for="query">Search Query:</label>
+                <input type="text" id="query" placeholder="e.g. dentist in uk" value="dentist in uk">
+            </div>
+            
+            <div class="form-group">
+                <label for="leadCount">Lead Count:</label>
+                <input type="number" id="leadCount" min="1" max="100" value="10">
+            </div>
+
+            <div class="form-group">
+                <label for="minReviews">Minimum Reviews:</label>
+                <input type="number" id="minReviews" min="1" max="5" value="5">
+            </div>
+            
+            <div class="form-group">
+                <div class="button-container">
+                    <button id="scrapButton" onclick="scrapLeads()">
+                        Scrap Leads
+                    </button>
+                    <div id="spinner" class="spinner"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="results-container">
+            <div id="leadsContainer" class="leads-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        function scrapLeads() {
+            const query = document.getElementById('query').value.trim();
+            const leadCount = document.getElementById('leadCount').value;
+            const minReviews = document.getElementById('minReviews').value;
+            const scrapButton = document.getElementById('scrapButton');
+            const spinner = document.getElementById('spinner');
+            const leadsContainer = document.getElementById('leadsContainer');
+            
+            if (!query) {
+                alert('Please enter a search query');
+                return;
+            }
+            
+            // Show loading state
+            scrapButton.disabled = true;
+            scrapButton.textContent = 'Scraping...';
+            spinner.style.display = 'inline-block';
+            leadsContainer.innerHTML = '';
+            
+            // Encode the query parameter
+            const encodedQuery = encodeURIComponent(query);
+            
+            // Make the AJAX request
+            fetch(`http://localhost:3000/get-leads?query=${encodedQuery}&leadCount=${leadCount}&minReviews=${minReviews}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(leads => {
+                    // Reset button state
+                    scrapButton.disabled = false;
+                    scrapButton.textContent = 'Scrap Leads';
+                    spinner.style.display = 'none';
+                    
+                    // Display the leads
+                    displayLeads(leads, leadCount);
+                })
+                .catch(error => {
+                    console.error('Error fetching leads:', error);
+                    scrapButton.disabled = false;
+                    scrapButton.textContent = 'Scrap Leads';
+                    spinner.style.display = 'none';
+                    leadsContainer.innerHTML = `
+                        <div class="no-results">
+                            <p>Error fetching leads. Please check if the API server is running at http://localhost:3000</p>
+                        </div>
+                    `;
+                });
+        }
+        
+        function displayLeads(leads, leadCount) {
+            const leadsContainer = document.getElementById('leadsContainer');
+            leadsContainer.innerHTML = '';
+            
+            // Limit the number of leads to display
+            const limitedLeads = leads.slice(0, leadCount);
+            
+            if (limitedLeads.length === 0) {
+                leadsContainer.innerHTML = `
+                    <div class="no-results">
+                        <p>No leads found. Try a different search query.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            limitedLeads.forEach(lead => {
+                const leadCard = document.createElement('div');
+                leadCard.className = 'lead-card';
+                
+                // Generate stars based on rating
+                const starsHTML = '★'.repeat(Math.floor(lead.stars)) + 
+                                 (lead.stars % 1 >= 0.5 ? '½' : '') + 
+                                 '☆'.repeat(5 - Math.ceil(lead.stars));
+                
+                leadCard.innerHTML = `
+                    <div class="lead-name">${lead.storeName || 'Unnamed Business'}</div>
+                    <div class="lead-rating">
+                        <span class="stars">${starsHTML}</span>
+                        <span>${lead.stars} (${lead.numberOfReviews} reviews)</span>
+                    </div>
+                    <div class="lead-details">
+                        ${lead.category ? `
+                            <div class="lead-detail">
+                                <span class="detail-label">Category:</span>
+                                <span class="detail-value">${lead.category}</span>
+                            </div>
+                        ` : ''}
+                        ${lead.phone ? `
+                            <div class="lead-detail">
+                                <span class="detail-label">Phone:</span>
+                                <span class="detail-value">${lead.phone}</span>
+                            </div>
+                        ` : ''}
+                        ${lead.address ? `
+                            <div class="lead-detail">
+                                <span class="detail-label">Address:</span>
+                                <span class="detail-value">${lead.address}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="lead-links">
+                        ${lead.bizWebsite ? `
+                            <a href="${lead.bizWebsite}" target="_blank" class="lead-link">Website</a>
+                        ` : ''}
+                        ${lead.googleUrl ? `
+                            <a href="${lead.googleUrl}" target="_blank" class="lead-link">Google Maps</a>
+                        ` : ''}
+                    </div>
+                `;
+                
+                leadsContainer.appendChild(leadCard);
+            });
+        }
+    </script>
+</body>
+</html>
