@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Lead Scraper</title>
     <style>
         * {
@@ -102,6 +102,7 @@
             display: flex;
             align-items: center;
             margin-top: 25px;
+            gap: 10px;
         }
 
         .results-container {
@@ -184,166 +185,151 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Lead Scraper</h1>
-        
-        <div class="form-container">
-            <div class="form-group">
-                <label for="query">Search Query:</label>
-                <input type="text" id="query" placeholder="e.g. dentist in uk" value="dentist in uk">
-            </div>
-            
-            <div class="form-group">
-                <label for="leadCount">Lead Count:</label>
-                <input type="number" id="leadCount" min="1" max="100" value="10">
-            </div>
+<div class="container">
+    <h1>Lead Scraper</h1>
 
-            <div class="form-group">
-                <label for="minReviews">Maximum Reviews:</label>
-                <input type="number" id="minReviews" min="1" max="100000000000000000000000000000000" value="10">
-            </div>
-            
-            <div class="form-group">
-                <div class="button-container">
-                    <button id="scrapButton" onclick="scrapLeads()">
-                        Scrap Leads
-                    </button>
-                    <div id="spinner" class="spinner"></div>
-                </div>
-            </div>
+    <div class="form-container">
+        <div class="form-group">
+            <label for="query">Search Query:</label>
+            <input type="text" id="query" placeholder="e.g. dentist in uk" value="dentist in uk">
         </div>
-        
-        <div class="results-container">
-            <div id="leadsContainer" class="leads-grid"></div>
+
+        <div class="form-group">
+            <label for="leadCount">Lead Count:</label>
+            <input type="number" id="leadCount" min="1" max="100" value="10">
+        </div>
+
+        <div class="form-group">
+            <label for="minReviews">Maximum Reviews:</label>
+            <input type="number" id="minReviews" min="1" value="10">
+        </div>
+
+        <div class="form-group">
+            <div class="button-container">
+                <button id="scrapButton" onclick="scrapLeads()">Scrap</button>
+                <div id="spinner" class="spinner"></div>
+                <button id="downloadBtn" style="display:none;" onclick="downloadCSV()">Download</button>
+            </div>
         </div>
     </div>
 
-    <script>
-        function scrapLeads() {
-            const query = document.getElementById('query').value.trim();
-            const leadCount = document.getElementById('leadCount').value;
-            const minReviews = document.getElementById('minReviews').value;
-            const scrapButton = document.getElementById('scrapButton');
-            const spinner = document.getElementById('spinner');
-            const leadsContainer = document.getElementById('leadsContainer');
-            
-            if (!query) {
-                alert('Please enter a search query');
-                return;
-            }
-            
-            // Show loading state
-            scrapButton.disabled = true;
-            scrapButton.textContent = 'Scraping...';
-            spinner.style.display = 'inline-block';
-            leadsContainer.innerHTML = '';
-            
-            // Encode the query parameter
-            const encodedQuery = encodeURIComponent(query);
-            
-            // Make the AJAX request
-            fetch(`/get-leads?query=${encodedQuery}&leadCount=${leadCount}&minReviews=${minReviews}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(leads => {
-                    // Reset button state
-                    scrapButton.disabled = false;
-                    scrapButton.textContent = 'Scrap Leads';
-                    spinner.style.display = 'none';
-                    
-                    // Display the leads
-                    displayLeads(leads, leadCount);
-                })
-                .catch(error => {
-                    console.error('Error fetching leads:', error);
-                    scrapButton.disabled = false;
-                    scrapButton.textContent = 'Scrap Leads';
-                    spinner.style.display = 'none';
-                    leadsContainer.innerHTML = `
-                        <div class="no-results">
-                            <p>Error fetching leads. Please check if the API server is running at http://localhost:3000</p>
-                        </div>
-                    `;
-                });
+    <div class="results-container">
+        <div id="leadsContainer" class="leads-grid"></div>
+    </div>
+</div>
+
+<script>
+    let globalLeads = [];
+
+    function scrapLeads() {
+        const query = document.getElementById('query').value.trim();
+        const leadCount = parseInt(document.getElementById('leadCount').value);
+        const minReviews = parseInt(document.getElementById('minReviews').value);
+        const scrapButton = document.getElementById('scrapButton');
+        const spinner = document.getElementById('spinner');
+        const leadsContainer = document.getElementById('leadsContainer');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        if (!query) {
+            alert('Please enter a search query');
+            return;
         }
-        
-        function displayLeads(leads, leadCount) {
-            const leadsContainer = document.getElementById('leadsContainer');
-            leadsContainer.innerHTML = '';
-            
-            // Limit the number of leads to display
-            const limitedLeads = leads.slice(0, leadCount);
-            
-            if (limitedLeads.length === 0) {
-                leadsContainer.innerHTML = `
-                    <div class="no-results">
-                        <p>No leads found. Try a different search query.</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            limitedLeads.forEach(lead => {
-                const leadCard = document.createElement('div');
-                leadCard.className = 'lead-card';
-                
-                // Generate stars based on rating
-                
-                const starsHTML = '★'.repeat(Math.floor(lead.stars)) + 
-                                 (lead.stars % 1 >= 0.5 ? '½' : '') + 
-                                 '☆'.repeat(5 - Math.ceil(lead.stars));
-                
-                leadCard.innerHTML = `
-                    <div class="lead-name">${lead.storeName || 'Unnamed Business'}</div>
-                    <div class="lead-rating">
-                        ${
-                            ((lead.stars == 0 || lead.stars == null) && (lead.numberOfReviews == 0 || lead.numberOfReviews == null)) ?
-                                "No Reviews"
-                            : 
-                            `
-                                <span class="stars">${starsHTML}</span>
-                                <span>${lead.stars} (${lead.numberOfReviews} reviews)</span>
-                            `
-                        }
-                       
-                    </div>
-                    <div class="lead-details">
-                        ${lead.category ? `
-                            <div class="lead-detail">
-                                <span class="detail-label">Category:</span>
-                                <span class="detail-value">${lead.category}</span>
-                            </div>
-                        ` : ''}
-                        ${lead.phone ? `
-                            <div class="lead-detail">
-                                <span class="detail-label">Phone:</span>
-                                <span class="detail-value">${lead.phone}</span>
-                            </div>
-                        ` : ''}
-                        ${lead.address ? `
-                            <div class="lead-detail">
-                                <span class="detail-label">Address:</span>
-                                <span class="detail-value">${lead.address}</span>
-                            </div>
-                        ` : ''}
-                    </div>
-                    <div class="lead-links">
-                        ${lead.bizWebsite ? `
-                            <a href="${lead.bizWebsite}" target="_blank" class="lead-link">Website</a>
-                        ` : ''}
-                        ${lead.googleUrl ? `
-                            <a href="${lead.googleUrl}" target="_blank" class="lead-link">Google Maps</a>
-                        ` : ''}
-                    </div>
-                `;
-                
-                leadsContainer.appendChild(leadCard);
+
+        scrapButton.disabled = true;
+        scrapButton.textContent = 'Scraping...';
+        spinner.style.display = 'inline-block';
+        leadsContainer.innerHTML = '';
+        downloadBtn.style.display = 'none';
+
+        const encodedQuery = encodeURIComponent(query);
+
+        fetch(`/get-leads?query=${encodedQuery}&leadCount=${leadCount}&minReviews=${minReviews}`)
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(leads => {
+                globalLeads = leads.slice(0, leadCount);
+                scrapButton.disabled = false;
+                scrapButton.textContent = 'Scrap Leads';
+                spinner.style.display = 'none';
+                downloadBtn.style.display = globalLeads.length > 0 ? 'inline-block' : 'none';
+                displayLeads(globalLeads);
+            })
+            .catch(error => {
+                console.error('Error fetching leads:', error);
+                scrapButton.disabled = false;
+                scrapButton.textContent = 'Scrap Leads';
+                spinner.style.display = 'none';
+                leadsContainer.innerHTML = `<div class="no-results"><p>Error fetching leads. Please check if the API server is running.</p></div>`;
             });
+    }
+
+    function displayLeads(leads) {
+        const leadsContainer = document.getElementById('leadsContainer');
+        leadsContainer.innerHTML = '';
+
+        if (!leads.length) {
+            leadsContainer.innerHTML = `<div class="no-results"><p>No leads found.</p></div>`;
+            return;
         }
-    </script>
+
+        leads.forEach(lead => {
+            const leadCard = document.createElement('div');
+            leadCard.className = 'lead-card';
+
+            const starsHTML = '★'.repeat(Math.floor(lead.stars)) +
+                              (lead.stars % 1 >= 0.5 ? '½' : '') +
+                              '☆'.repeat(5 - Math.ceil(lead.stars));
+
+            leadCard.innerHTML = `
+                <div class="lead-name">${lead.storeName || 'Unnamed Business'}</div>
+                <div class="lead-rating">
+                    ${
+                        (!lead.stars && !lead.numberOfReviews)
+                            ? "No Reviews"
+                            : `<span class="stars">${starsHTML}</span><span>${lead.stars} (${lead.numberOfReviews} reviews)</span>`
+                    }
+                </div>
+                <div class="lead-details">
+                    ${lead.category ? `<div class="lead-detail"><span class="detail-label">Category:</span><span class="detail-value">${lead.category}</span></div>` : ''}
+                    ${lead.phone ? `<div class="lead-detail"><span class="detail-label">Phone:</span><span class="detail-value">${lead.phone}</span></div>` : ''}
+                    ${lead.address ? `<div class="lead-detail"><span class="detail-label">Address:</span><span class="detail-value">${lead.address}</span></div>` : ''}
+                </div>
+                <div class="lead-links">
+                    ${lead.bizWebsite ? `<a href="${lead.bizWebsite}" target="_blank" class="lead-link">Website</a>` : ''}
+                    ${lead.googleUrl ? `<a href="${lead.googleUrl}" target="_blank" class="lead-link">Google Maps</a>` : ''}
+                </div>
+            `;
+            leadsContainer.appendChild(leadCard);
+        });
+    }
+
+    function downloadCSV() {
+        if (!globalLeads.length) return;
+
+        const headers = ['storeName', 'stars', 'numberOfReviews', 'category', 'phone', 'address', 'bizWebsite', 'googleUrl'];
+        const csvRows = [headers.join(',')];
+
+        globalLeads.forEach(lead => {
+            const row = headers.map(header => {
+                const value = lead[header] || '';
+                return `"${String(value).replace(/"/g, '""')}"`;
+            });
+            csvRows.push(row.join(','));
+        });
+
+        const csvContent = csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+
+        const downloadLink = document.createElement('a');
+        downloadLink.href = url;
+        downloadLink.download = 'leads.csv';
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+    }
+</script>
 </body>
 </html>

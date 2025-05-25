@@ -93,14 +93,11 @@ export async function searchGoogleMaps(query, leadCount = 10, minReviews = 0) {
       const lastOfLast = lastChild.children().last();
 
       const starsStr = ratingText?.split("stars")?.[0]?.trim() || 0;
-      const reviewsStr = ratingText?.split("stars")?.[1]?.replace("Reviews", "")?.trim() || 0;
-
+      let reviewsStr = ratingText?.split("stars")?.[1]?.replace("Reviews", "")?.trim() || undefined;
+      reviewsStr = reviewsStr?.replace(",","") || 0;
       const stars = starsStr ? Number(starsStr) : 0;
       const numberOfReviews = reviewsStr ? Number(reviewsStr) : 0;
       if (numberOfReviews > Number(minReviews)) return;
-
-
-      console.log(numberOfReviews,stars,storeName)
 
       businesses.push({
         placeId: `ChI${url?.split("?")[0]?.split("ChI")?.[1]}`,
