@@ -292,6 +292,7 @@
                 leadCard.className = 'lead-card';
                 
                 // Generate stars based on rating
+                
                 const starsHTML = '★'.repeat(Math.floor(lead.stars)) + 
                                  (lead.stars % 1 >= 0.5 ? '½' : '') + 
                                  '☆'.repeat(5 - Math.ceil(lead.stars));
@@ -299,8 +300,16 @@
                 leadCard.innerHTML = `
                     <div class="lead-name">${lead.storeName || 'Unnamed Business'}</div>
                     <div class="lead-rating">
-                        <span class="stars">${starsHTML}</span>
-                        <span>${lead.stars} (${lead.numberOfReviews} reviews)</span>
+                        ${
+                            ((lead.stars == 0 || lead.stars == null) && (lead.numberOfReviews == 0 || lead.numberOfReviews == null)) ?
+                                "No Reviews"
+                            : 
+                            `
+                                <span class="stars">${starsHTML}</span>
+                                <span>${lead.stars} (${lead.numberOfReviews} reviews)</span>
+                            `
+                        }
+                       
                     </div>
                     <div class="lead-details">
                         ${lead.category ? `
